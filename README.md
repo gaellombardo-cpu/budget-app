@@ -1,59 +1,66 @@
-# 💎 Budget Liquid Glass
+# 🚀 Comment déployer l'appli — pas à pas
 
-Application de budget personnelle avec design Liquid Glass, navigation par mois/année, et installation PWA sur iPhone.
+## Étape 1 — Créer le repo GitHub (à faire une seule fois)
 
----
+1. Va sur **https://github.com**
+2. Crée un compte gratuit si tu n'en as pas (avec ton email)
+3. Une fois connecté, clique sur le bouton **+** en haut à droite → **New repository**
+4. Remplis :
+   - **Repository name** : budget-app
+   - Laisse tout le reste par défaut
+   - Public ou Private au choix
+5. Clique **Create repository** en bas
 
-## 🚀 Déploiement sur Vercel (5 minutes)
+## Étape 2 — Uploader les fichiers sur GitHub
 
-### Méthode 1 — Glisser-déposer (la plus simple)
+1. Sur la page qui vient de s'ouvrir, clique sur le lien bleu **uploading an existing file** (au milieu de la page)
+2. **Sur ton ordinateur** : dézippe `budget-app-v16.zip` (double-clic dessus)
+3. Tu obtiens un dossier `budget-app`. **OUVRE-LE.**
+4. **Sélectionne tout son contenu** (Cmd+A sur Mac) : package.json, README.md, netlify.toml, dossier public, dossier src, etc.
+5. **Glisse-dépose ces fichiers** (pas le dossier `budget-app`, mais son contenu) dans la zone de upload GitHub
+6. En bas, clique le bouton vert **Commit changes**
 
-1. Va sur **[vercel.com](https://vercel.com)** et crée un compte gratuit
-2. Sur le dashboard, clique **"Add New Project"**
-3. Clique **"Browse"** ou glisse ce dossier `budget-app` dans la zone de dépôt
-4. Vercel détecte automatiquement React → clique **"Deploy"**
-5. En 2 minutes tu as une URL du type `budget-xxx.vercel.app`
+## Étape 3 — Connecter Netlify à GitHub
 
-### Méthode 2 — Via GitHub (recommandée pour les mises à jour)
+1. Va sur **https://app.netlify.com**
+2. Clique sur ton site `adorable-marshmallow-13fbf7`
+3. Va dans **Site configuration** (icône engrenage à gauche)
+4. Section **Build & deploy** → **Continuous deployment** → bouton **Link repository**
+5. Choisis **GitHub** → autorise Netlify
+6. Sélectionne ton repo **budget-app**
+7. Vérifie que c'est bien rempli :
+   - Branch : main
+   - Build command : npm run build
+   - Publish directory : build
+8. Clique **Deploy**
 
-1. Crée un repo sur [github.com](https://github.com) et pousse ce dossier
-2. Connecte ton repo à Vercel
-3. Chaque push = déploiement automatique
+Le build prend 2-3 minutes. À la fin, ton site sera live.
 
----
+## Étape 4 — Sur ton iPhone
 
-## 📱 Installer sur iPhone (PWA)
-
-Une fois l'app déployée sur Vercel :
-
-1. Ouvre l'URL dans **Safari** (pas Chrome)
-2. Appuie sur l'icône **Partager** ↑ (bas de l'écran)
-3. Défile et appuie sur **"Sur l'écran d'accueil"**
-4. Nomme-la **"Budget"** → **Ajouter**
-
-L'app apparaît comme une vraie app native, sans barre Safari, en plein écran.
-
----
-
-## ✨ Fonctionnalités
-
-- **Salaire net** configurable et persistant
-- **Charges fixes** ajoutables/supprimables (loyer, abonnements, crédits…)
-- **Dépenses** par catégorie avec note et date
-- **Navigation** mois par mois et vue annuelle
-- **Graphiques** évolution 6 mois, épargne mensuelle
-- **Bilan épargne** : réel vs budgété, cumul, projection
-- **Données persistantes** via localStorage (restent entre les sessions)
-- **Design Liquid Glass** avec backdrop-filter, reflets, blobs animés
-- **Typographie DM Sans** (Helvetica-like)
+Comme avant : Safari → URL Netlify → Partager → Sur l'écran d'accueil
 
 ---
 
-## 🛠 Développement local
+## Pour les futures mises à jour
 
-```bash
-npm install
-npm start
-```
+Plus besoin de zip. Quand je te livre une nouvelle version :
 
-Ouvre http://localhost:3000
+1. Va sur ton repo GitHub `budget-app`
+2. Pour chaque fichier modifié (généralement `src/App.jsx`) :
+   - Clique sur le fichier → icône **crayon** en haut à droite
+   - Sélectionne tout (Cmd+A) → colle le nouveau contenu
+   - **Commit changes** en bas
+3. Netlify détecte et redéploie tout seul en 2 minutes
+4. Sur iPhone : ferme et relance l'app
+
+---
+
+## Si quelque chose ne marche pas
+
+Va sur Netlify → onglet **Deploys** :
+- Vert **Published** = OK
+- Rouge **Failed** = clique dessus, regarde le log, copie l'erreur
+- Jaune **Building** = patiente
+
+Envoie-moi l'erreur exacte si besoin.
