@@ -67,7 +67,7 @@ function Modal({title,onClose,children}){
   const isDark=t.mode==="dark";
   return(
     <div style={{position:"fixed",inset:0,zIndex:300,display:"flex",alignItems:"flex-end",justifyContent:"center",background:"rgba(0,0,0,0.2)",backdropFilter:"blur(12px)",WebkitBackdropFilter:"blur(12px)"}} onClick={e=>e.target===e.currentTarget&&onClose()}>
-      <div style={{width:"100%",maxWidth:390,background:isDark?"rgba(20,20,32,0.97)":"rgba(255,255,255,0.95)",backdropFilter:"blur(40px) saturate(200%)",WebkitBackdropFilter:"blur(40px) saturate(200%)",borderRadius:"28px 28px 0 0",padding:"0 20px 48px",borderTop:`0.5px solid ${t.cardBorder}`,boxShadow:"0 -8px 40px rgba(0,0,0,0.15)",maxHeight:"90dvh",overflowY:"auto"}}>
+      <div style={{width:"100%",maxWidth:390,background:isDark?"rgba(20,20,32,0.97)":"rgba(255,255,255,0.95)",backdropFilter:"blur(40px) saturate(200%)",WebkitBackdropFilter:"blur(40px) saturate(200%)",borderRadius:"28px 28px 0 0",padding:`0 20px calc(env(safe-area-inset-bottom,16px) + 32px)`,borderTop:`0.5px solid ${t.cardBorder}`,boxShadow:"0 -8px 40px rgba(0,0,0,0.15)",maxHeight:"92dvh",overflowY:"auto",WebkitOverflowScrolling:"touch"}}>
         <div style={{width:36,height:4,background:"rgba(128,128,128,0.25)",borderRadius:2,margin:"10px auto 22px"}}/>
         <div style={{fontSize:18,fontWeight:600,letterSpacing:"-0.02em",color:t.text,marginBottom:18}}>{title}</div>
         {children}
@@ -136,8 +136,10 @@ export default function App(){
   const [mExtra,   setMExtra]  =useState(false);
   const [mEExtra,  setMEExtra] =useState(null);
   const [restoreMsg,setRestoreMsg]=useState("");
+  const [toast,setToast]=useState(""); /* feedback after save actions */
+  const showToast=msg=>{setToast(msg);setTimeout(()=>setToast(""),1800);};
   const [search,   setSearch]  =useState("");
-  const [filterCat,setFilterCat]=useState("all");
+  const [filterCat,setFilterCat]=useLS("lg_filterCat","all");
 
   /* form fields */
   const [fSal,setFSal]=useState("");
@@ -211,22 +213,22 @@ export default function App(){
   const next=()=>{if(view==="month"){let m=curM+1,y=curY;if(m>11){m=0;y++;}setCurM(m);setCurY(y);}else setCurY(y=>y+1);};
 
   /* actions */
-  const addCharge=()=>{if(!fCN||!fCA)return;setCharges(p=>[...p,{id:Date.now()+Math.random(),label:fCN,amount:parseFloat(fCA),catId:fCCat}]);setFCN("");setFCA("");setMCharge(false);};
+  const addCharge=()=>{if(!fCN||!fCA)return;setCharges(p=>[...p,{id:Date.now()+Math.random(),label:fCN,amount:parseFloat(fCA),catId:fCCat}]);setFCN("");setFCA("");setMCharge(false);showToast("Dépense fixe ajoutée");};
   const openEC=c=>{setFCN(c.label);setFCA(String(c.amount));setFCCat(c.catId||cats[0]?.id);setMECharge(c);};
-  const saveEC=()=>{if(!fCN||!fCA)return;setCharges(p=>p.map(c=>c.id===mECharge.id?{...c,label:fCN,amount:parseFloat(fCA),catId:fCCat}:c));setMECharge(null);};
-  const delC=id=>{setCharges(p=>p.filter(c=>c.id!==id));setMECharge(null);};
-  const addExp=()=>{if(!fEA)return;setExpenses(p=>[...p,{id:Date.now(),catId:fECat,amount:parseFloat(fEA),note:fEN,month:curM,year:curY,date:new Date().toLocaleDateString("fr-FR")}]);setFEA("");setFEN("");setMExpense(false);};
+  const saveEC=()=>{if(!fCN||!fCA)return;setCharges(p=>p.map(c=>c.id===mECharge.id?{...c,label:fCN,amount:parseFloat(fCA),catId:fCCat}:c));setMECharge(null);showToast("Modifications enregistrées");};
+  const delC=id=>{setCharges(p=>p.filter(c=>c.id!==id));setMECharge(null);showToast("Supprimé");};
+  const addExp=()=>{if(!fEA)return;setExpenses(p=>[...p,{id:Date.now(),catId:fECat,amount:parseFloat(fEA),note:fEN,month:curM,year:curY,date:new Date().toLocaleDateString("fr-FR")}]);setFEA("");setFEN("");setMExpense(false);showToast("Dépense enregistrée");};
   const openEE=e=>{setFECat(e.catId);setFEA(String(e.amount));setFEN(e.note||"");setMEExpense(e);};
-  const saveEE=()=>{if(!fEA)return;setExpenses(p=>p.map(e=>e.id===mEExpense.id?{...e,catId:fECat,amount:parseFloat(fEA),note:fEN}:e));setMEExpense(null);};
-  const delE=id=>{setExpenses(p=>p.filter(e=>e.id!==id));setMEExpense(null);};
-  const saveBudget=()=>{if(!mBudget)return;setBudgets(p=>({...p,[mBudget.id]:parseFloat(fBudget)||0}));setMBudget(null);};
+  const saveEE=()=>{if(!fEA)return;setExpenses(p=>p.map(e=>e.id===mEExpense.id?{...e,catId:fECat,amount:parseFloat(fEA),note:fEN}:e));setMEExpense(null);showToast("Modifications enregistrées");};
+  const delE=id=>{setExpenses(p=>p.filter(e=>e.id!==id));setMEExpense(null);showToast("Supprimé");};
+  const saveBudget=()=>{if(!mBudget)return;setBudgets(p=>({...p,[mBudget.id]:parseFloat(fBudget)||0}));setMBudget(null);showToast("Budget mis à jour");};
   const openBudget=c=>{setFBudget(String(budgets[c.id]||""));setMBudget(c);};
-  const addCat=()=>{if(!fNCL)return;const col=PRESET_COLORS[fNCC];setCats(p=>[...p,{id:"c"+Date.now(),label:fNCL,icon:fNCI,...col}]);setFNCL("");setFNCI(PRESET_ICONS[0]);setFNCC(0);setMCat(false);};
-  const delCat=id=>{if(DEFAULT_CATS.find(c=>c.id===id))return;setCats(p=>p.filter(c=>c.id!==id));};
-  const addExtra=()=>{if(!fXAmt)return;setExtraIncomes(p=>[...p,{id:Date.now(),month:curM,year:curY,amount:parseFloat(fXAmt),note:fXNote,date:new Date().toLocaleDateString("fr-FR")}]);setFXAmt("");setFXNote("");setMExtra(false);};
+  const addCat=()=>{if(!fNCL)return;const col=PRESET_COLORS[fNCC];setCats(p=>[...p,{id:"c"+Date.now(),label:fNCL,icon:fNCI,...col}]);setFNCL("");setFNCI(PRESET_ICONS[0]);setFNCC(0);setMCat(false);showToast("Catégorie créée");};
+  const delCat=id=>{if(DEFAULT_CATS.find(c=>c.id===id))return;setCats(p=>p.filter(c=>c.id!==id));showToast("Catégorie supprimée");};
+  const addExtra=()=>{if(!fXAmt)return;setExtraIncomes(p=>[...p,{id:Date.now(),month:curM,year:curY,amount:parseFloat(fXAmt),note:fXNote,date:new Date().toLocaleDateString("fr-FR")}]);setFXAmt("");setFXNote("");setMExtra(false);showToast("Rentrée enregistrée");};
   const openEX=x=>{setFXAmt(String(x.amount));setFXNote(x.note||"");setMEExtra(x);};
-  const saveEX=()=>{if(!fXAmt)return;setExtraIncomes(p=>p.map(x=>x.id===mEExtra.id?{...x,amount:parseFloat(fXAmt),note:fXNote}:x));setMEExtra(null);};
-  const delX=id=>{setExtraIncomes(p=>p.filter(x=>x.id!==id));setMEExtra(null);};
+  const saveEX=()=>{if(!fXAmt)return;setExtraIncomes(p=>p.map(x=>x.id===mEExtra.id?{...x,amount:parseFloat(fXAmt),note:fXNote}:x));setMEExtra(null);showToast("Modifications enregistrées");};
+  const delX=id=>{setExtraIncomes(p=>p.filter(x=>x.id!==id));setMEExtra(null);showToast("Supprimé");};
   const exportData=()=>{const d={salary,charges,expenses,cats,budgets,projects,extraIncomes,themeId,exportedAt:new Date().toISOString()};const blob=new Blob([JSON.stringify(d,null,2)],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=`budget-${new Date().toLocaleDateString("fr-FR").replace(/\//g,"-")}.json`;a.click();URL.revokeObjectURL(url);};
   const importData=e=>{const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(d.salary!==undefined)setSalary(d.salary);if(d.charges!==undefined)setCharges(d.charges);if(d.expenses!==undefined)setExpenses(d.expenses);if(d.cats!==undefined)setCats(d.cats);if(d.budgets!==undefined)setBudgets(d.budgets);if(d.projects!==undefined)setProjects(d.projects);if(d.extraIncomes!==undefined)setExtraIncomes(d.extraIncomes);if(d.themeId!==undefined)setThemeId(d.themeId);if(d.recurringExp!==undefined&&Array.isArray(d.recurringExp)&&d.recurringExp.length>0){setCharges(p=>[...p,...d.recurringExp.map(r=>({id:r.id||Date.now()+Math.random(),label:r.note||"Dépense récurrente",amount:r.amount,catId:r.catId}))]);}setRestoreMsg("✓ Données restaurées !");setTimeout(()=>setRestoreMsg(""),3000);}catch{setRestoreMsg("✗ Fichier invalide.");setTimeout(()=>setRestoreMsg(""),3000);}};reader.readAsText(file);e.target.value="";};
 
@@ -264,6 +266,14 @@ export default function App(){
     ]};
     return(<>
       {alerts.length>0&&<div style={{margin:"14px 16px 0",padding:"12px 16px",background:"rgba(220,80,80,0.1)",borderRadius:16,border:"0.5px solid rgba(220,80,80,0.25)"}}><p style={{fontSize:12,fontWeight:600,color:neg,letterSpacing:"0.02em",marginBottom:6}}>⚠ BUDGET DÉPASSÉ</p>{alerts.map(c=>{const b=budgets[c.id],sp=sCat(c.id);return(<p key={c.id} style={{fontSize:13,color:neg,letterSpacing:"-0.01em"}}>{c.icon} {c.label} · {f(sp)} / {f(b)} (+{f(sp-b)})</p>);})}</div>}
+      {salN===0?(
+        <GC s={{margin:"14px 16px 0",padding:"32px 22px",textAlign:"center"}} onClick={()=>{setFSal("");setMSalary(true);}}>
+          <p style={{fontSize:36,marginBottom:12}}>💼</p>
+          <p style={{fontSize:18,fontWeight:600,letterSpacing:"-0.02em",color:t.text,marginBottom:6}}>Bienvenue !</p>
+          <p style={{fontSize:13,color:t.sub,letterSpacing:"-0.01em",lineHeight:1.5,marginBottom:18}}>Saisis ton salaire net pour commencer à suivre ton budget.</p>
+          <div style={{display:"inline-flex",alignItems:"center",gap:6,padding:"12px 22px",borderRadius:14,background:`linear-gradient(135deg,${t.accent},${t.b3.replace(/[\d.]+\)$/,"0.9)")})`,color:"#fff",fontSize:14,fontWeight:600,letterSpacing:"-0.01em",boxShadow:"0 4px 14px rgba(0,0,0,0.15)"}}>＋ Saisir mon salaire</div>
+        </GC>
+      ):(<>
       <GC s={{margin:"14px 16px 0",padding:"22px 22px 20px"}}>
         <p style={eb}>Budget disponible</p>
         <p style={bn(rest<0?neg:t.text)}>{f(rest)}</p>
@@ -304,7 +314,7 @@ export default function App(){
       </>}
       <div style={{margin:"12px 16px 0",display:"flex",gap:8}}>
         <div style={{flex:2}}><Btn onClick={()=>{setFECat(cats[0]?.id);setFEA("");setFEN("");setMExpense(true);}}>＋ Dépense</Btn></div>
-        <div style={{flex:1}}><Btn onClick={()=>{setFXAmt("");setFXNote("");setMExtra(true);}} grad="linear-gradient(135deg,#28b478,#3ca0dc)">＋ Revenu</Btn></div>
+        <div style={{flex:1}}><Btn onClick={()=>{setFXAmt("");setFXNote("");setMExtra(true);}} grad="linear-gradient(135deg,#28b478,#3ca0dc)">＋ Rentrée</Btn></div>
       </div>
 
       {/* Extras section — only if any this month */}
@@ -391,6 +401,7 @@ export default function App(){
           <div key={l} style={br}><span style={{fontSize:14,color:t.sub,letterSpacing:"-0.01em"}}>{l}</span><span style={{fontSize:15,fontWeight:300,letterSpacing:"-0.01em",color:c}}>{v}</span></div>
         ))}
       </GC>
+      </>)}
       <div style={{height:16}}/>
     </>);
   }
@@ -583,11 +594,11 @@ export default function App(){
     </>);
   }
 
-  const TABS=[["◎","Accueil"],["≡","Fixes"],["◷","Historique"],["◈","Budgets"],["✦","Projets"],["⚙","Réglages"]];
+  const TABS=[["◎","Accueil"],["≡","Fixes"],["◷","Histo."],["◐","Budgets"],["✦","Projets"],["⚙","Réglages"]];
 
   return(
     <ThemeCtx.Provider value={theme}>
-      <style>{`@keyframes drift{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(24px,18px) scale(1.06)}66%{transform:translate(-16px,28px) scale(0.94)}}input::placeholder{color:rgba(128,128,128,0.4)}*{box-sizing:border-box;margin:0;padding:0}::-webkit-scrollbar{display:none}`}</style>
+      <style>{`@keyframes drift{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(24px,18px) scale(1.06)}66%{transform:translate(-16px,28px) scale(0.94)}}@keyframes toastIn{0%{opacity:0;transform:translate(-50%,12px) scale(0.96)}100%{opacity:1;transform:translate(-50%,0) scale(1)}}input::placeholder{color:rgba(128,128,128,0.4)}*{box-sizing:border-box;margin:0;padding:0}::-webkit-scrollbar{display:none}`}</style>
 
       {/* blobs */}
       {[[260,260,"-60px","0",undefined,undefined,theme.b1,0],[220,220,"30%",undefined,"0",undefined,theme.b2,-5],[200,200,undefined,"30px",undefined,"200px",theme.b3,-9]].map(([w,h,top,left,right,bottom,col,d],i)=>(
@@ -598,11 +609,11 @@ export default function App(){
       <div style={{position:"fixed",inset:0,background:theme.bg,zIndex:-1}}/>
 
       <div style={{maxWidth:390,minHeight:"100dvh",margin:"0 auto",position:"relative",overflow:"hidden",fontFamily:FONT,WebkitFontSmoothing:"antialiased",letterSpacing:"-0.01em"}}>
-        <div style={{overflowY:"auto",minHeight:"100dvh",paddingBottom:100,paddingTop:"env(safe-area-inset-top,16px)",position:"relative",zIndex:1}}>
+        <div style={{overflowY:"auto",minHeight:"100dvh",paddingBottom:`calc(env(safe-area-inset-bottom,16px) + 92px)`,paddingTop:"env(safe-area-inset-top,16px)",position:"relative",zIndex:1,WebkitOverflowScrolling:"touch"}}>
 
-          {/* salary bar */}
+          {/* salary bar — hidden on home tab when empty (hero handles CTA) */}
           {!salary?(
-            <div onClick={()=>{setFSal("");setMSalary(true);}} style={{margin:"12px 16px 0",padding:"14px 18px",background:`${theme.accent}18`,borderRadius:16,border:`0.5px solid ${theme.accent}33`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+            tab!==0&&<div onClick={()=>{setFSal("");setMSalary(true);}} style={{margin:"12px 16px 0",padding:"14px 18px",background:`${theme.accent}18`,borderRadius:16,border:`0.5px solid ${theme.accent}33`,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
               <span style={{fontSize:14,fontWeight:500,color:theme.text,letterSpacing:"-0.01em"}}>💼 Saisir mon salaire net</span>
               <span style={{color:theme.accent,fontSize:18}}>›</span>
             </div>
@@ -631,17 +642,17 @@ export default function App(){
           {tab===1&&<Charges/>}
           {tab===2&&<History/>}
           {tab===3&&<Budgets/>}
-          {tab===4&&<Projects theme={theme} projects={projects} setProjects={setProjects}/>}
+          {tab===4&&<Projects theme={theme} projects={projects} setProjects={setProjects} showToast={showToast}/>}
           {tab===5&&<Settings/>}
         </div>
 
         {/* tab bar */}
         <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:390,display:"flex",padding:`8px 4px calc(env(safe-area-inset-bottom,16px) + 12px)`,gap:2,background:theme.navBg,backdropFilter:"blur(28px) saturate(200%)",WebkitBackdropFilter:"blur(28px) saturate(200%)",borderTop:`0.5px solid ${theme.navBorder}`,zIndex:100}}>
           {TABS.map(([ico,lbl],i)=>(
-            <div key={i} onClick={()=>setTab(i)} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:2,cursor:"pointer",padding:"6px 0",borderRadius:12,position:"relative"}}>
-              <span style={{fontSize:18,transition:"transform 0.25s cubic-bezier(.34,1.56,.64,1)",transform:tab===i?"scale(1.15)":"scale(1)"}}>{ico}</span>
-              <span style={{fontSize:9,fontWeight:tab===i?600:500,color:tab===i?theme.text:theme.hint,letterSpacing:"0.01em"}}>{lbl}</span>
-              {tab===i&&<div style={{width:4,height:4,borderRadius:"50%",background:theme.accent,marginTop:1}}/>}
+            <div key={i} onClick={()=>setTab(i)} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:3,cursor:"pointer",padding:"6px 2px",borderRadius:12,position:"relative",minWidth:0}}>
+              <span style={{fontSize:19,transition:"transform 0.25s cubic-bezier(.34,1.56,.64,1)",transform:tab===i?"scale(1.15)":"scale(1)",lineHeight:1}}>{ico}</span>
+              <span style={{fontSize:10,fontWeight:tab===i?600:500,color:tab===i?theme.text:theme.hint,letterSpacing:"-0.01em",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",maxWidth:"100%"}}>{lbl}</span>
+              {tab===i&&<div style={{width:4,height:4,borderRadius:"50%",background:theme.accent,marginTop:0}}/>}
               {i===0&&alerts.length>0&&<div style={{position:"absolute",top:4,right:"50%",transform:"translateX(14px)",width:8,height:8,borderRadius:"50%",background:neg}}/>}
               {i===4&&projects.some(p=>p.status==="active"&&p.expenses.reduce((s,e)=>s+e.amount,0)>p.budget)&&<div style={{position:"absolute",top:4,right:"50%",transform:"translateX(14px)",width:8,height:8,borderRadius:"50%",background:"#f0a028"}}/>}
             </div>
@@ -651,12 +662,12 @@ export default function App(){
 
       {/* ── modals ── */}
       {mSalary&&<Modal title="💼 Salaire net mensuel" onClose={()=>setMSalary(false)}><GI placeholder="Ex : 2 500" type="number" value={fSal} onChange={e=>setFSal(e.target.value)} autoFocus/><Btn onClick={()=>{setSalary(fSal);setMSalary(false);}}>Enregistrer</Btn></Modal>}
-      {mCharge&&<Modal title="Nouvelle dépense fixe" onClose={()=>setMCharge(false)}><p style={{fontSize:13,color:theme.sub,marginBottom:12,letterSpacing:"-0.01em"}}>Revient automatiquement chaque mois.</p><CatChips sel={fCCat} onSel={setFCCat}/><GI placeholder="Nom · ex : Loyer, Netflix…" value={fCN} onChange={e=>setFCN(e.target.value)} autoFocus/><GI placeholder="Montant en €" type="number" value={fCA} onChange={e=>setFCA(e.target.value)}/><Btn onClick={addCharge} grad="linear-gradient(135deg,#328cf0,#6450dc)">Ajouter</Btn></Modal>}
-      {mECharge&&<Modal title="Modifier la dépense fixe" onClose={()=>setMECharge(null)}><CatChips sel={fCCat} onSel={setFCCat}/><GI placeholder="Nom" value={fCN} onChange={e=>setFCN(e.target.value)} autoFocus/><GI placeholder="Montant en €" type="number" value={fCA} onChange={e=>setFCA(e.target.value)}/><Btn onClick={saveEC} grad="linear-gradient(135deg,#328cf0,#6450dc)">Enregistrer</Btn><DelBtn onClick={()=>delC(mECharge.id)}>Supprimer</DelBtn></Modal>}
+      {mCharge&&<Modal title="Nouvelle dépense fixe" onClose={()=>setMCharge(false)}><p style={{fontSize:13,color:theme.sub,marginBottom:14,letterSpacing:"-0.01em"}}>Cette dépense sera automatiquement comptabilisée chaque mois.</p><GI placeholder="Montant en €" type="number" value={fCA} onChange={e=>setFCA(e.target.value)} autoFocus/><GI placeholder="Libellé · ex : Loyer, Netflix…" value={fCN} onChange={e=>setFCN(e.target.value)}/><CatChips sel={fCCat} onSel={setFCCat}/><Btn onClick={addCharge} grad="linear-gradient(135deg,#328cf0,#6450dc)">Enregistrer</Btn></Modal>}
+      {mECharge&&<Modal title="Modifier la dépense fixe" onClose={()=>setMECharge(null)}><GI placeholder="Montant en €" type="number" value={fCA} onChange={e=>setFCA(e.target.value)} autoFocus/><GI placeholder="Libellé" value={fCN} onChange={e=>setFCN(e.target.value)}/><CatChips sel={fCCat} onSel={setFCCat}/><Btn onClick={saveEC} grad="linear-gradient(135deg,#328cf0,#6450dc)">Enregistrer</Btn><DelBtn onClick={()=>delC(mECharge.id)}>Supprimer</DelBtn></Modal>}
       {mExpense&&<Modal title="Nouvelle dépense" onClose={()=>setMExpense(false)}>
         <CatChips sel={fECat} onSel={setFECat}/>
         <GI placeholder="Montant en €" type="number" value={fEA} onChange={e=>setFEA(e.target.value)} autoFocus/>
-        <GI placeholder="Libellé (ex : Tabac, Bar, Vélo…)" value={fEN} onChange={e=>setFEN(e.target.value)}/>
+        <GI placeholder="Libellé · ex : Tabac, Bar, Vélo…" value={fEN} onChange={e=>setFEN(e.target.value)}/>
         {filteredSuggestions.length>0&&<div style={{display:"flex",flexWrap:"wrap",gap:6,marginTop:-2,marginBottom:12}}>
           {filteredSuggestions.map(s=>(
             <div key={s.label} onClick={()=>setFEN(s.label)} style={{padding:"6px 11px",borderRadius:14,fontSize:12,fontWeight:500,cursor:"pointer",background:isDark?"rgba(255,255,255,0.07)":"rgba(255,255,255,0.55)",border:`0.5px solid ${isDark?"rgba(255,255,255,0.1)":"rgba(0,0,0,0.06)"}`,color:theme.sub,letterSpacing:"-0.01em"}}>
@@ -667,9 +678,10 @@ export default function App(){
         <Btn onClick={addExp}>Enregistrer</Btn>
       </Modal>}
       {mEExpense&&<Modal title="Modifier la dépense" onClose={()=>setMEExpense(null)}>
+        <p style={{fontSize:13,color:theme.sub,marginBottom:14,letterSpacing:"-0.01em"}}>Dépense du {mEExpense.date}</p>
         <CatChips sel={fECat} onSel={setFECat}/>
         <GI placeholder="Montant en €" type="number" value={fEA} onChange={e=>setFEA(e.target.value)} autoFocus/>
-        <GI placeholder="Libellé (optionnel)" value={fEN} onChange={e=>setFEN(e.target.value)}/>
+        <GI placeholder="Libellé · ex : Tabac, Bar, Vélo…" value={fEN} onChange={e=>setFEN(e.target.value)}/>
         {filteredSuggestions.length>0&&<div style={{display:"flex",flexWrap:"wrap",gap:6,marginTop:-2,marginBottom:12}}>
           {filteredSuggestions.map(s=>(
             <div key={s.label} onClick={()=>setFEN(s.label)} style={{padding:"6px 11px",borderRadius:14,fontSize:12,fontWeight:500,cursor:"pointer",background:isDark?"rgba(255,255,255,0.07)":"rgba(255,255,255,0.55)",border:`0.5px solid ${isDark?"rgba(255,255,255,0.1)":"rgba(0,0,0,0.06)"}`,color:theme.sub,letterSpacing:"-0.01em"}}>
@@ -681,8 +693,8 @@ export default function App(){
         <DelBtn onClick={()=>delE(mEExpense.id)}>Supprimer</DelBtn>
       </Modal>}
       {mBudget&&<Modal title={`Budget · ${mBudget.icon} ${mBudget.label}`} onClose={()=>setMBudget(null)}><p style={{fontSize:13,color:theme.sub,marginBottom:12,letterSpacing:"-0.01em"}}>Dépensé ce mois : {f(sCat(mBudget.id))}</p><GI placeholder="Plafond mensuel en €" type="number" value={fBudget} onChange={e=>setFBudget(e.target.value)} autoFocus/><Btn onClick={saveBudget} grad={`linear-gradient(135deg,${mBudget.bar},#3ca0dc)`}>Définir le budget</Btn>{budgets[mBudget.id]>0&&<DelBtn onClick={()=>{setBudgets(p=>{const n={...p};delete n[mBudget.id];return n;});setMBudget(null);}}>Supprimer le plafond</DelBtn>}</Modal>}
-      {mExtra&&<Modal title="💰 Revenu exceptionnel" onClose={()=>setMExtra(false)}><p style={{fontSize:13,color:theme.sub,marginBottom:12,letterSpacing:"-0.01em"}}>Vente, prime, cadeau, remboursement… Ajouté à ton budget de {MONTHS[curM]}.</p><GI placeholder="Montant en €" type="number" value={fXAmt} onChange={e=>setFXAmt(e.target.value)} autoFocus/><GI placeholder="Description (ex : Vente Vinted, Prime…)" value={fXNote} onChange={e=>setFXNote(e.target.value)}/><Btn onClick={addExtra} grad="linear-gradient(135deg,#28b478,#3ca0dc)">Enregistrer</Btn></Modal>}
-      {mEExtra&&<Modal title="Modifier le revenu" onClose={()=>setMEExtra(null)}><GI placeholder="Montant en €" type="number" value={fXAmt} onChange={e=>setFXAmt(e.target.value)} autoFocus/><GI placeholder="Description" value={fXNote} onChange={e=>setFXNote(e.target.value)}/><Btn onClick={saveEX} grad="linear-gradient(135deg,#28b478,#3ca0dc)">Enregistrer</Btn><DelBtn onClick={()=>delX(mEExtra.id)}>Supprimer</DelBtn></Modal>}
+      {mExtra&&<Modal title="💰 Revenu exceptionnel" onClose={()=>setMExtra(false)}><p style={{fontSize:13,color:theme.sub,marginBottom:14,letterSpacing:"-0.01em"}}>Vente, prime, cadeau, remboursement… Ajouté à ton budget de {MONTHS[curM]}.</p><GI placeholder="Montant en €" type="number" value={fXAmt} onChange={e=>setFXAmt(e.target.value)} autoFocus/><GI placeholder="Libellé · ex : Vente Vinted, Prime…" value={fXNote} onChange={e=>setFXNote(e.target.value)}/><Btn onClick={addExtra} grad="linear-gradient(135deg,#28b478,#3ca0dc)">Enregistrer</Btn></Modal>}
+      {mEExtra&&<Modal title="Modifier le revenu" onClose={()=>setMEExtra(null)}><GI placeholder="Montant en €" type="number" value={fXAmt} onChange={e=>setFXAmt(e.target.value)} autoFocus/><GI placeholder="Libellé" value={fXNote} onChange={e=>setFXNote(e.target.value)}/><Btn onClick={saveEX} grad="linear-gradient(135deg,#28b478,#3ca0dc)">Enregistrer</Btn><DelBtn onClick={()=>delX(mEExtra.id)}>Supprimer</DelBtn></Modal>}
       {mCat&&<Modal title="Nouvelle catégorie" onClose={()=>setMCat(false)}>
         <GI placeholder="Nom de la catégorie" value={fNCL} onChange={e=>setFNCL(e.target.value)} autoFocus/>
         <p style={{fontSize:12,fontWeight:500,letterSpacing:"0.05em",color:theme.hint,textTransform:"uppercase",marginBottom:8}}>Icône</p>
@@ -692,6 +704,11 @@ export default function App(){
         {fNCL&&<div style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",background:PRESET_COLORS[fNCC].bg,borderRadius:14,marginBottom:14,border:`0.5px solid ${PRESET_COLORS[fNCC].bar}33`}}><span style={{fontSize:22}}>{fNCI}</span><span style={{fontSize:15,fontWeight:400,color:theme.text,letterSpacing:"-0.01em"}}>{fNCL}</span></div>}
         <Btn onClick={addCat} grad={`linear-gradient(135deg,${PRESET_COLORS[fNCC].bar},${PRESET_COLORS[(fNCC+2)%PRESET_COLORS.length].bar})`}>Créer la catégorie</Btn>
       </Modal>}
+
+      {/* Toast feedback */}
+      {toast&&<div style={{position:"fixed",bottom:`calc(env(safe-area-inset-bottom,16px) + 100px)`,left:"50%",transform:"translateX(-50%)",zIndex:500,padding:"10px 18px",borderRadius:24,background:isDark?"rgba(40,40,50,0.96)":"rgba(20,20,30,0.92)",backdropFilter:"blur(20px) saturate(180%)",WebkitBackdropFilter:"blur(20px) saturate(180%)",color:"#fff",fontSize:13,fontWeight:500,letterSpacing:"-0.01em",boxShadow:"0 8px 24px rgba(0,0,0,0.25),inset 0 1px 0 rgba(255,255,255,0.08)",border:"0.5px solid rgba(255,255,255,0.08)",animation:"toastIn 0.25s cubic-bezier(.34,1.56,.64,1)",pointerEvents:"none",fontFamily:FONT,whiteSpace:"nowrap"}}>
+        ✓ {toast}
+      </div>}
     </ThemeCtx.Provider>
   );
 }

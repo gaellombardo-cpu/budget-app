@@ -27,7 +27,7 @@ function PModal({title, onClose, children, theme}) {
   return (
     <div style={{position:"fixed",inset:0,zIndex:400,display:"flex",alignItems:"flex-end",justifyContent:"center",background:"rgba(0,0,0,0.2)",backdropFilter:"blur(12px)",WebkitBackdropFilter:"blur(12px)"}}
       onClick={e=>e.target===e.currentTarget&&onClose()}>
-      <div style={{width:"100%",maxWidth:390,background:isDark?"rgba(20,20,32,0.97)":"rgba(255,255,255,0.95)",backdropFilter:"blur(40px)",WebkitBackdropFilter:"blur(40px)",borderRadius:"28px 28px 0 0",padding:"0 20px 48px",borderTop:`0.5px solid ${theme.cardBorder}`,boxShadow:"0 -8px 40px rgba(0,0,0,0.15)",maxHeight:"90dvh",overflowY:"auto"}}>
+      <div style={{width:"100%",maxWidth:390,background:isDark?"rgba(20,20,32,0.97)":"rgba(255,255,255,0.95)",backdropFilter:"blur(40px)",WebkitBackdropFilter:"blur(40px)",borderRadius:"28px 28px 0 0",padding:`0 20px calc(env(safe-area-inset-bottom,16px) + 32px)`,borderTop:`0.5px solid ${theme.cardBorder}`,boxShadow:"0 -8px 40px rgba(0,0,0,0.15)",maxHeight:"92dvh",overflowY:"auto",WebkitOverflowScrolling:"touch"}}>
         <div style={{width:36,height:4,background:"rgba(128,128,128,0.25)",borderRadius:2,margin:"10px auto 22px"}}/>
         <div style={{fontSize:18,fontWeight:600,letterSpacing:"-0.02em",color:theme.text,marginBottom:18}}>{title}</div>
         {children}
@@ -63,7 +63,7 @@ function GlassCard({theme,s={},children,onClick}) {
 /* ════════════════════════════════════════
    PROJECTS MAIN COMPONENT
 ════════════════════════════════════════ */
-export default function Projects({ theme, projects, setProjects }) {
+export default function Projects({ theme, projects, setProjects, showToast = () => {} }) {
   const isDark = theme.mode==="dark";
   const t = theme;
 
@@ -139,6 +139,7 @@ export default function Projects({ theme, projects, setProjects }) {
     setProjects(p=>[...p, proj]);
     setFName(""); setFBudget(""); setFDate(""); setStep(1);
     setView("list");
+    showToast("Projet créé");
   }
 
   function saveEditProject() {
@@ -146,16 +147,20 @@ export default function Projects({ theme, projects, setProjects }) {
       ?{...proj,name:fEditName,budget:parseFloat(fEditBudget)||proj.budget,targetDate:fEditDate||null}
       :proj));
     setMEditProj(false);
+    showToast("Projet mis à jour");
   }
 
   function archiveProject(id) {
+    const proj = projects.find(p=>p.id===id);
     setProjects(p=>p.map(proj=>proj.id===id?{...proj,status:proj.status==="archived"?"active":"archived"}:proj));
     setView("list");
+    showToast(proj?.status==="archived"?"Projet restauré":"Projet archivé");
   }
 
   function deleteProject(id) {
     setProjects(p=>p.filter(proj=>proj.id!==id));
     setView("list");
+    showToast("Projet supprimé");
   }
 
   /* ── expense CRUD ── */
@@ -167,17 +172,20 @@ export default function Projects({ theme, projects, setProjects }) {
     const exp = {id:Date.now(), catId, amount:parseFloat(fEAmt), note:fENote, date:new Date().toLocaleDateString("fr-FR")};
     setProjects(p=>p.map(p2=>p2.id===activeId?{...p2,expenses:[...p2.expenses,exp]}:p2));
     setFEAmt(""); setFENote(""); setMNewExp(false);
+    showToast("Dépense enregistrée");
   }
 
   function saveEditExpense() {
     if (!fEAmt) return;
     setProjects(p=>p.map(proj=>proj.id===activeId?{...proj,expenses:proj.expenses.map(e=>e.id===mEditExp.id?{...e,catId:fECat||e.catId,amount:parseFloat(fEAmt),note:fENote}:e)}:proj));
     setMEditExp(null);
+    showToast("Modifications enregistrées");
   }
 
   function deleteExpense(id) {
     setProjects(p=>p.map(proj=>proj.id===activeId?{...proj,expenses:proj.expenses.filter(e=>e.id!==id)}:proj));
     setMEditExp(null);
+    showToast("Supprimé");
   }
 
   /* ── category CRUD ── */
@@ -186,10 +194,12 @@ export default function Projects({ theme, projects, setProjects }) {
     const cat = {id:`c${Date.now()}`,label:fCatName};
     setProjects(p=>p.map(proj=>proj.id===activeId?{...proj,cats:[...proj.cats,cat]}:proj));
     setFCatName(""); setMNewCat(false);
+    showToast("Catégorie ajoutée");
   }
 
   function deleteCategory(catId) {
     setProjects(p=>p.map(proj=>proj.id===activeId?{...proj,cats:proj.cats.filter(c=>c.id!==catId),expenses:proj.expenses.filter(e=>e.catId!==catId)}:proj));
+    showToast("Catégorie supprimée");
   }
 
   /* ── shared styles ── */
@@ -291,7 +301,7 @@ export default function Projects({ theme, projects, setProjects }) {
           <PI placeholder="Ex : 12 000" type="number" value={fBudget} onChange={e=>setFBudget(e.target.value)} theme={t}/>
           <p style={{fontSize:12,fontWeight:500,color:t.hint,letterSpacing:"0.05em",textTransform:"uppercase",marginBottom:8,marginTop:6}}>Date cible (optionnel)</p>
           <input type="date" value={fDate} onChange={e=>setFDate(e.target.value)}
-            style={{width:"100%",background:isDark?"rgba(255,255,255,0.08)":"rgba(255,255,255,0.6)",border:`0.5px solid ${isDark?"rgba(255,255,255,0.12)":"rgba(200,200,220,0.6)"}`,borderRadius:14,padding:"13px 16px",fontSize:16,color:t.text,outline:"none",fontFamily:FONT,marginBottom:10}}/>
+            style={{width:"100%",background:isDark?"rgba(255,255,255,0.08)":"rgba(255,255,255,0.6)",border:`0.5px solid ${isDark?"rgba(255,255,255,0.12)":"rgba(200,200,220,0.6)"}`,borderRadius:14,padding:"13px 16px",fontSize:16,color:t.text,outline:"none",fontFamily:FONT,marginBottom:10,colorScheme:isDark?"dark":"light"}}/>
           <div style={{display:"flex",gap:8,marginTop:6}}>
             <button onClick={()=>setStep(1)} style={{flex:1,height:52,border:`0.5px solid ${isDark?"rgba(255,255,255,0.12)":"rgba(0,0,0,0.12)"}`,borderRadius:16,background:"transparent",color:t.sub,fontSize:15,fontWeight:500,cursor:"pointer",fontFamily:FONT,letterSpacing:"-0.01em"}}>← Retour</button>
             <div style={{flex:2}}><PBtn onClick={createProject} color={fColor}>Créer le projet</PBtn></div>
@@ -431,7 +441,7 @@ export default function Projects({ theme, projects, setProjects }) {
             {proj.cats.map(c=>{const s=fECat===c.id;return(<div key={c.id} onClick={()=>setFECat(c.id)} style={{padding:"8px 12px",borderRadius:20,fontSize:13,fontWeight:500,cursor:"pointer",transition:"all 0.18s",border:s?"none":`0.5px solid ${isDark?"rgba(255,255,255,0.1)":"rgba(0,0,0,0.08)"}`,background:s?proj.color:isDark?"rgba(255,255,255,0.07)":"rgba(255,255,255,0.5)",color:s?"#fff":t.sub,letterSpacing:"-0.01em"}}>{c.label}</div>);})}
           </div>
           <PI placeholder="Montant en €" type="number" value={fEAmt} onChange={e=>setFEAmt(e.target.value)} autoFocus theme={t}/>
-          <PI placeholder="Libellé (ex : Tabac, Bar, Vélo…)" value={fENote} onChange={e=>setFENote(e.target.value)} theme={t}/>
+          <PI placeholder="Libellé · ex : Robe, Vol Tokyo…" value={fENote} onChange={e=>setFENote(e.target.value)} theme={t}/>
           {projFilteredSuggestions.length>0&&<div style={{display:"flex",flexWrap:"wrap",gap:6,marginTop:-2,marginBottom:12}}>
             {projFilteredSuggestions.map(s=>(
               <div key={s.label} onClick={()=>setFENote(s.label)} style={{padding:"6px 11px",borderRadius:14,fontSize:12,fontWeight:500,cursor:"pointer",background:isDark?"rgba(255,255,255,0.07)":"rgba(255,255,255,0.55)",border:`0.5px solid ${isDark?"rgba(255,255,255,0.1)":"rgba(0,0,0,0.06)"}`,color:t.sub,letterSpacing:"-0.01em"}}>
@@ -449,7 +459,7 @@ export default function Projects({ theme, projects, setProjects }) {
             {proj.cats.map(c=>{const s=fECat===c.id;return(<div key={c.id} onClick={()=>setFECat(c.id)} style={{padding:"8px 12px",borderRadius:20,fontSize:13,fontWeight:500,cursor:"pointer",border:s?"none":`0.5px solid ${isDark?"rgba(255,255,255,0.1)":"rgba(0,0,0,0.08)"}`,background:s?proj.color:isDark?"rgba(255,255,255,0.07)":"rgba(255,255,255,0.5)",color:s?"#fff":t.sub,letterSpacing:"-0.01em"}}>{c.label}</div>);})}
           </div>
           <PI placeholder="Montant en €" type="number" value={fEAmt} onChange={e=>setFEAmt(e.target.value)} autoFocus theme={t}/>
-          <PI placeholder="Libellé (optionnel)" value={fENote} onChange={e=>setFENote(e.target.value)} theme={t}/>
+          <PI placeholder="Libellé" value={fENote} onChange={e=>setFENote(e.target.value)} theme={t}/>
           {projFilteredSuggestions.length>0&&<div style={{display:"flex",flexWrap:"wrap",gap:6,marginTop:-2,marginBottom:12}}>
             {projFilteredSuggestions.map(s=>(
               <div key={s.label} onClick={()=>setFENote(s.label)} style={{padding:"6px 11px",borderRadius:14,fontSize:12,fontWeight:500,cursor:"pointer",background:isDark?"rgba(255,255,255,0.07)":"rgba(255,255,255,0.55)",border:`0.5px solid ${isDark?"rgba(255,255,255,0.1)":"rgba(0,0,0,0.06)"}`,color:t.sub,letterSpacing:"-0.01em"}}>
@@ -465,7 +475,7 @@ export default function Projects({ theme, projects, setProjects }) {
       {mNewCat && (
         <PModal title="Nouvelle catégorie" onClose={()=>setMNewCat(false)} theme={t}>
           <PI placeholder="Nom de la catégorie" value={fCatName} onChange={e=>setFCatName(e.target.value)} autoFocus theme={t}/>
-          <PBtn onClick={addCategory} color={proj.color}>Ajouter</PBtn>
+          <PBtn onClick={addCategory} color={proj.color}>Enregistrer</PBtn>
         </PModal>
       )}
 
@@ -477,7 +487,7 @@ export default function Projects({ theme, projects, setProjects }) {
           <PI placeholder="Budget en €" type="number" value={fEditBudget} onChange={e=>setFEditBudget(e.target.value)} theme={t}/>
           <p style={{fontSize:12,fontWeight:500,color:t.hint,letterSpacing:"0.05em",textTransform:"uppercase",marginBottom:8}}>Date cible</p>
           <input type="date" value={fEditDate} onChange={e=>setFEditDate(e.target.value)}
-            style={{width:"100%",background:isDark?"rgba(255,255,255,0.08)":"rgba(255,255,255,0.6)",border:`0.5px solid ${isDark?"rgba(255,255,255,0.12)":"rgba(200,200,220,0.6)"}`,borderRadius:14,padding:"13px 16px",fontSize:16,color:t.text,outline:"none",fontFamily:FONT,marginBottom:10}}/>
+            style={{width:"100%",background:isDark?"rgba(255,255,255,0.08)":"rgba(255,255,255,0.6)",border:`0.5px solid ${isDark?"rgba(255,255,255,0.12)":"rgba(200,200,220,0.6)"}`,borderRadius:14,padding:"13px 16px",fontSize:16,color:t.text,outline:"none",fontFamily:FONT,marginBottom:10,colorScheme:isDark?"dark":"light"}}/>
           <PBtn onClick={saveEditProject} color={proj.color}>Enregistrer</PBtn>
         </PModal>
       )}
